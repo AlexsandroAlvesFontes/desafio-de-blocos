@@ -58,3 +58,92 @@ button{
     box-sizing: border-box;
     position: absolute;
 }
+
+#telaResultado {
+    text-align: center;
+    padding: 30px 15px;
+}
+
+#telaResultado h1 {
+    font-size: 32px;
+    margin-bottom: 20px;
+}
+
+#telaResultado p {
+    font-size: 20px;
+    margin-bottom: 20px;
+}
+
+#btnJogarNovamente {
+    background-color: #8b5cf6;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 16px 30px;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+#btnJogarNovamente:hover {
+    background-color: #7c3aed;
+}
+
+.controles-celular {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    margin: 20px auto;
+}
+
+.controles-celular button {
+    width: 58px;
+    height: 52px;
+    border: none;
+    border-radius: 12px;
+    background-color: #8b5cf6;
+    color: white;
+    font-size: 26px;
+    cursor: pointer;
+}
+
+.controles-celular button:active {
+    background-color: #6d28d9;
+    transform: scale(0.95);
+}
+
+/* No computador, os controles por toque ficam escondidos */
+@media (min-width: 481px) {
+    .controles-celular {
+        display: none;
+    }
+}
+
+/* Ajustes para celulares */
+@media (max-width: 480px) {
+    .container {
+        width: 100%;
+        padding: 12px;
+        box-sizing: border-box;
+    }
+
+    #telaJogo h2 {
+        font-size: 24px;
+    }
+
+    #tabuleiro {
+        width: 300px;
+        max-width: 100%;
+        box-sizing: border-box;
+        margin: 16px auto;
+    }
+
+    #telaResultado h1 {
+        font-size: 28px;
+    }
+
+    button {
+        min-height: 48px;
+        touch-action: manipulation;
+    }
+}

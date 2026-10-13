@@ -2,75 +2,310 @@
 const btnComecar = document.getElementById("btnComecar");
 const telaInicial = document.getElementById("telaInicial");
 const telaJogo = document.getElementById("telaJogo");
+const telaResultado = document.getElementById("telaResultado");
 
-let intervaloQueda;
+const tabuleiro = document.getElementById("tabuleiro");
+const pontuacaoElemento = document.getElementById("pontuacao");
+const pontuacaoFinal = document.getElementById("pontuacaoFinal");
+const btnJogarNovamente = document.getElementById("btnJogarNovamente");
 
-// Botão para começar o jogo
-btnComecar.addEventListener("click", function() {
-    telaInicial.hidden = true;
-    telaJogo.hidden = false;
+// Controles para celular
+const btnEsquerda = document.getElementById("btnEsquerda");
+const btnDireita = document.getElementById("btnDireita");
+const btnGirar = document.getElementById("btnGirar");
+const btnDescer = document.getElementById("btnDescer");
 
-    iniciarQueda();
-});
+const tamanhoBloco = 30;
+const COLUNAS = 10;
+const LINHAS = 13;
 
-// Função para criar e fazer a peça cair
-function iniciarQueda() {
-    const tabuleiro = document.getElementById("tabuleiro");
+let intervaloQueda = null;
+let pecaAtual = null;
+let posicaoX = 0;
+let posicaoY = 0;
+let pontuacao = 0;
+let jogoAtivo = false;
+let blocosFixos = [];
 
-    // Limpa o tabuleiro
-    tabuleiro.innerHTML = "";
+// Formatos e cores das peças
+const modelosPecas = [
+    { cor: "#38bdf8", blocos: [[0,0],[1,0],[2,0],[3,0]] },
+    { cor: "#a78bfa", blocos: [[0,0],[1,0],[0,1],[1,1]] },
+    { cor: "#fb7185", blocos: [[1,0],[0,1],[1,1],[2,1]] },
+    { cor: "#4ade80", blocos: [[0,0],[0,1],[0,2],[1,2]] },
+    { cor: "#facc15", blocos: [[1,0],[2,0],[0,1],[1,1]] },
+    { cor: "#fb923c", blocos: [[0,0],[1,0],[2,0],[2,1]] },
+    { cor: "#f87171", blocos: [[0,0],[1,0],[1,1],[2,1]] }
+];
 
-    // Cria a peça
-    const peca = document.createElement("div");
-    peca.classList.add("peca");
+// Botão Começar inicia uma partida
+btnComecar.addEventListener("click", iniciarJogo);
 
-    // Define a posição inicial
-    peca.style.left = "120px";
-    peca.style.top = "0px";
-
-    // Adiciona a peça ao tabuleiro
-    tabuleiro.appendChild(peca);
-
-    let posicaoY = 0;
-    let posicaoX = 120;
-
-    // Evita manter uma queda anterior ativa
+// Botão Jogar novamente volta para a tela inicial
+btnJogarNovamente.addEventListener("click", function() {
     clearInterval(intervaloQueda);
 
-    // Faz a peça cair automaticamente
-    intervaloQueda = setInterval(function() {
-        posicaoY += 2;
-        peca.style.top = posicaoY + "px";
+    jogoAtivo = false;
+    pecaAtual = null;
 
-        // Para quando a peça chega ao fundo
-        if (posicaoY >= tabuleiro.clientHeight - peca.offsetHeight) {
-            clearInterval(intervaloQueda);
-        }
-    }, 50);
+    telaResultado.hidden = true;
+    telaJogo.hidden = true;
+    telaInicial.hidden = false;
+});
+
+// Inicia ou reinicia os dados do jogo
+function iniciarJogo() {
+    clearInterval(intervaloQueda);
+
+    telaInicial.hidden = true;
+    telaResultado.hidden = true;
+    telaJogo.hidden = false;
+
+    tabuleiro.innerHTML = "";
+    blocosFixos = [];
+    pecaAtual = null;
+    pontuacao = 0;
+    pontuacaoElemento.textContent = pontuacao;
+    jogoAtivo = true;
+
+    iniciarNovaPeca();
 }
 
-// Movimenta a peça com as setas do teclado
+// Cria uma peça aleatória
+function iniciarNovaPeca() {
+    if (!jogoAtivo) return;
 
-document.addEventListener("keydown", function(event) {
-    const peca = document.querySelector(".peca");
-    const tabuleiro = document.getElementById("tabuleiro");
+    const modelo = modelosPecas[
+        Math.floor(Math.random() * modelosPecas.length)
+    ];
 
-    if (!peca || telaJogo.hidden) {
+    pecaAtual = {
+        blocos: modelo.blocos.map(bloco => [...bloco]),
+        cor: modelo.cor
+    };
+
+    // Sorteia uma posição horizontal válida
+    const larguraPeca = Math.max(
+        ...pecaAtual.blocos.map(bloco => bloco[0])
+    ) + 1;
+
+    const colunaMaxima = COLUNAS - larguraPeca;
+
+    posicaoX = Math.floor(
+        Math.random() * (colunaMaxima + 1)
+    );
+
+    posicaoY = 0;
+
+    if (colide(posicaoX, posicaoY)) {
+        pecaAtual = null;
+        terminarJogo();
         return;
     }
 
-    let posicaoX = parseInt(peca.style.left) || 0;
+    desenharTabuleiro();
 
-    if (event.key === "ArrowLeft" && posicaoX > 0) {
-        posicaoX -= 30;
+    clearInterval(intervaloQueda);
+    intervaloQueda = setInterval(descerPeca, 500);
+}
+
+// Verifica colisões
+function colide(x, y) {
+    if (!pecaAtual) return false;
+
+    return pecaAtual.blocos.some(function(bloco) {
+        const bx = x + bloco[0];
+        const by = y + bloco[1];
+
+        return (
+            bx < 0 ||
+            bx >= COLUNAS ||
+            by < 0 ||
+            by >= LINHAS ||
+            blocosFixos.some(fixo => fixo.x === bx && fixo.y === by)
+        );
+    });
+}
+
+// Gira a peça
+function girarPeca() {
+    if (!jogoAtivo || !pecaAtual) return;
+
+    const formaAnterior = pecaAtual.blocos;
+
+    let novaForma = formaAnterior.map(function(bloco) {
+        return [-bloco[1], bloco[0]];
+    });
+
+    const menorX = Math.min(...novaForma.map(bloco => bloco[0]));
+    const menorY = Math.min(...novaForma.map(bloco => bloco[1]));
+
+    novaForma = novaForma.map(function(bloco) {
+        return [
+            bloco[0] - menorX,
+            bloco[1] - menorY
+        ];
+    });
+
+    pecaAtual.blocos = novaForma;
+
+    if (colide(posicaoX, posicaoY)) {
+        pecaAtual.blocos = formaAnterior;
+        return;
     }
 
-    if (
-        event.key === "ArrowRight" &&
-        posicaoX < tabuleiro.clientWidth - peca.offsetWidth
-    ) {
-        posicaoX += 30;
+    desenharTabuleiro();
+}
+
+// Faz a peça descer
+function descerPeca() {
+    if (!jogoAtivo || !pecaAtual) return;
+
+    if (!colide(posicaoX, posicaoY + 1)) {
+        posicaoY++;
+        desenharTabuleiro();
+    } else {
+        fixarPeca();
+    }
+}
+
+// Fixa a peça no tabuleiro
+function fixarPeca() {
+    clearInterval(intervaloQueda);
+
+    pecaAtual.blocos.forEach(function(bloco) {
+        blocosFixos.push({
+            x: posicaoX + bloco[0],
+            y: posicaoY + bloco[1],
+            cor: pecaAtual.cor
+        });
+    });
+
+    pecaAtual = null;
+
+    limparLinhas();
+    desenharTabuleiro();
+
+    setTimeout(iniciarNovaPeca, 250);
+}
+
+// Remove linhas completas
+function limparLinhas() {
+    for (let y = LINHAS - 1; y >= 0; y--) {
+        const linhaCompleta = Array.from(
+            { length: COLUNAS },
+            (_, x) => blocosFixos.some(
+                bloco => bloco.x === x && bloco.y === y
+            )
+        ).every(Boolean);
+
+        if (linhaCompleta) {
+            blocosFixos = blocosFixos
+                .filter(bloco => bloco.y !== y)
+                .map(bloco => bloco.y < y
+                    ? { ...bloco, y: bloco.y + 1 }
+                    : bloco
+                );
+
+            pontuacao += 100;
+            pontuacaoElemento.textContent = pontuacao;
+
+            y++;
+        }
+    }
+}
+
+// Desenha os blocos
+function desenharTabuleiro() {
+    tabuleiro.innerHTML = "";
+
+    function desenharBloco(x, y, cor) {
+        const bloco = document.createElement("div");
+        bloco.classList.add("peca");
+
+        bloco.style.left = x * tamanhoBloco + "px";
+        bloco.style.top = y * tamanhoBloco + "px";
+        bloco.style.backgroundColor = cor;
+
+        tabuleiro.appendChild(bloco);
     }
 
-    peca.style.left = posicaoX + "px";
+    blocosFixos.forEach(function(bloco) {
+        desenharBloco(bloco.x, bloco.y, bloco.cor);
+    });
+
+    if (pecaAtual) {
+        pecaAtual.blocos.forEach(function(bloco) {
+            desenharBloco(
+                posicaoX + bloco[0],
+                posicaoY + bloco[1],
+                pecaAtual.cor
+            );
+        });
+    }
+}
+
+// Controles do teclado
+document.addEventListener("keydown", function(event) {
+    if (!jogoAtivo || !pecaAtual || telaJogo.hidden) return;
+
+    const teclasJogo = [
+        "ArrowLeft",
+        "ArrowRight",
+        "ArrowDown",
+        "ArrowUp"
+    ];
+
+    if (teclasJogo.includes(event.key)) {
+        event.preventDefault();
+    }
+
+    if (event.key === "ArrowLeft") {
+        moverPeca(-1);
+    }
+
+    if (event.key === "ArrowRight") {
+        moverPeca(1);
+    }
+
+    if (event.key === "ArrowDown") {
+        descerPeca();
+    }
+
+    if (event.key === "ArrowUp") {
+        girarPeca();
+    }
 });
+
+// Move a peça para os lados
+function moverPeca(direcao) {
+    if (!jogoAtivo || !pecaAtual) return;
+
+    if (!colide(posicaoX + direcao, posicaoY)) {
+        posicaoX += direcao;
+        desenharTabuleiro();
+    }
+}
+
+// Controles para celular
+btnEsquerda.addEventListener("click", function() {
+    moverPeca(-1);
+});
+
+btnDireita.addEventListener("click", function() {
+    moverPeca(1);
+});
+
+btnGirar.addEventListener("click", girarPeca);
+btnDescer.addEventListener("click", descerPeca);
+
+// Mostra a terceira tela
+function terminarJogo() {
+    jogoAtivo = false;
+    clearInterval(intervaloQueda);
+
+    telaJogo.hidden = true;
+    telaResultado.hidden = false;
+
+    pontuacaoFinal.textContent = pontuacao;
+}
