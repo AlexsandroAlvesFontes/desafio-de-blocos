@@ -177,7 +177,7 @@ button{
 @media (max-width: 480px) {
     .container {
         width: 100%;
-        padding: 12px;
+        padding: 64px 12px 12px;
         box-sizing: border-box;
     }
 
@@ -199,6 +199,14 @@ button{
     button {
         min-height: 48px;
         touch-action: manipulation;
+    }
+
+    #btnMusica {
+        top: 8px;
+        right: 8px;
+        min-height: 40px;
+        padding: 8px 12px;
+        font-size: 12px;
     }
 }
 
