@@ -23,16 +23,42 @@
             </p>
 
             <button id="btnComecar">Começar</button>
+
+            <section class="cards-grid" aria-label="Categorias do jogo">
+                <article class="card">
+                    <div class="icone">💻</div>
+                    <h3>Computadores</h3>
+                    <p>
+                        Computadores disponíveis para estudo, trabalho e entretenimento.
+                    </p>
+                </article>
+
+                <article class="card">
+                    <div class="icone">🎮</div>
+                    <h3>Games</h3>
+                    <p>
+                        Um espaço para aproveitar seus jogos favoritos.
+                    </p>
+                </article>
+
+                <article class="card">
+                    <div class="icone">📚</div>
+                    <h3>Estudos</h3>
+                    <p>
+                        Organize tarefas, ideias e conteúdos para aprender melhor.
+                    </p>
+                </article>
+            </section>
         </section>
         <!-- Tela do jogo -->
 
-        <selection id="telaJogo" hidden>
+        <section id="telaJogo" hidden>
             <h2> Vamos Jogar!</h2>
 
             <p> Pontuação: <span id="pontuacao">0</span></p>
 
             <div id="tabuleiro"></div>
-        </selection>
+        </section>
 
         <!-- Terceira tela: resultado -->
         <section id="telaResultado" hidden>
@@ -45,9 +71,23 @@
                 <span id="pontuacaoFinal">0</span>
             </p>
 
+            <p>
+                OBRIGADO POR JOGAR!
+
+            </p>
+
             <button id="btnJogarNovamente">
                 Jogar novamente
             </button>
+
+
+            <p>
+                Desenvolvido por: ALEXSANDRO ALVES FONTES <br>
+                Desenvolvido por: CRISTIAN MIRANDA <br>
+                <br>
+                Turma de ANALISE E DESENVOLVIMENTO DE SISTEMAS
+
+            </p>
         </section>
 
         <div class="controles-celular">
@@ -56,12 +96,10 @@
             <button id="btnDescer" aria-label="Acelerar descida">↓</button>
             <button id="btnDireita" aria-label="Mover para direita">→</button>
         </div>
-
+        <button id="btnMusica" type="button">
+            🔇 Música desligada
+        </button>
     </main>
-
-
-    <!-- conexão com o arquivo JavaScript -->
-    <script src="script.js" defer></script>
 
 </body>
 

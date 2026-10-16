@@ -68,6 +68,8 @@ function iniciarJogo() {
     pontuacaoElemento.textContent = pontuacao;
     jogoAtivo = true;
 
+    if (!musicaLigada) ativarMusica();
+
     iniciarNovaPeca();
 }
 
@@ -309,3 +311,108 @@ function terminarJogo() {
 
     pontuacaoFinal.textContent = pontuacao;
 }
+
+
+
+// Música retrô do desafio
+let contextoAudio = null;
+let intervaloMusica = null;
+let notaAtual = 0;
+let musicaLigada = false;
+
+const notasRetro = [
+    523.25, 659.25, 783.99, 659.25,
+    587.33, 698.46, 880.00, 698.46,
+    523.25, 659.25, 783.99, 1046.50,
+    783.99, 659.25, 587.33, 523.25
+];
+
+function tocarNota(frequencia) {
+    if (!contextoAudio || !musicaLigada) return;
+
+    const oscilador = contextoAudio.createOscillator();
+    const volume = contextoAudio.createGain();
+
+    oscilador.type = "square";
+    oscilador.frequency.value = frequencia;
+    volume.gain.setValueAtTime(0.001, contextoAudio.currentTime);
+    volume.gain.exponentialRampToValueAtTime(
+        0.12,
+        contextoAudio.currentTime + 0.01
+    );
+    volume.gain.exponentialRampToValueAtTime(
+        0.001,
+        contextoAudio.currentTime + 0.13
+    );
+
+    oscilador.connect(volume);
+    volume.connect(contextoAudio.destination);
+    oscilador.start();
+    oscilador.stop(contextoAudio.currentTime + 0.14);
+}
+
+async function iniciarMusica() {
+    if (!musicaLigada) return;
+
+    const AudioContextAPI =
+        window.AudioContext || window.webkitAudioContext;
+
+    if (!AudioContextAPI) {
+        throw new Error("Este navegador não suporta áudio Web Audio.");
+    }
+
+    if (!contextoAudio) {
+        contextoAudio = new AudioContextAPI();
+    }
+
+    if (contextoAudio.state !== "running") {
+        await contextoAudio.resume();
+    }
+
+    if (contextoAudio.state !== "running") {
+        throw new Error("O navegador não permitiu iniciar o áudio.");
+    }
+
+    if (intervaloMusica !== null) return;
+
+    notaAtual = 0;
+    tocarNota(notasRetro[notaAtual]);
+    intervaloMusica = setInterval(() => {
+        notaAtual = (notaAtual + 1) % notasRetro.length;
+        tocarNota(notasRetro[notaAtual]);
+    }, 180);
+}
+
+function pararMusica() {
+    if (intervaloMusica !== null) {
+        clearInterval(intervaloMusica);
+        intervaloMusica = null;
+    }
+}
+
+async function ativarMusica() {
+    musicaLigada = true;
+    try {
+        await iniciarMusica();
+        btnMusica.textContent = "🔊 Música ligada";
+    } catch (erro) {
+        musicaLigada = false;
+        btnMusica.textContent = "⚠ Áudio indisponível";
+        console.error("Não foi possível iniciar a música:", erro);
+    }
+}
+
+async function alternarMusica() {
+    if (!musicaLigada) {
+        await ativarMusica();
+        return;
+    }
+
+    musicaLigada = false;
+    pararMusica();
+    btnMusica.textContent = "🔇 Música desligada";
+}
+
+const btnMusica = document.getElementById("btnMusica");
+btnMusica.textContent = "🔇 Música desligada";
+btnMusica.addEventListener("click", alternarMusica);
